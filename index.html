@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TriX Gaming Platform</title>
+    <script src="./ethers-6.7.1.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>🎮 TriX Gaming Platform</h1>
+        <p>Blockchain Gaming with Smart Contracts</p>
+      </div>
+
+      <!-- Wallet Section -->
+      <div class="wallet-section">
+        <div class="wallet-info">
+          <div class="wallet-connection">
+            <button id="connectBtn" class="btn btn-primary">
+              <span id="connectBtnText">Connect Wallet</span>
+            </button>
+            <div class="connection-status">
+              <div class="status-dot" id="statusDot"></div>
+              <span id="connectionStatus">Not Connected</span>
+            </div>
+          </div>
+
+          <div class="balance-info">
+            <div class="balance-item">
+              <span class="balance-label">ETH</span>
+              <span class="balance-value" id="ethBalance">0.0000</span>
+            </div>
+            <div class="balance-item">
+              <span class="balance-label">GT</span>
+              <span class="balance-value" id="gtBalance">0.00</span>
+            </div>
+            <div class="balance-item">
+              <span class="balance-label">USDT</span>
+              <span class="balance-value" id="usdtBalance">0.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Grid -->
+      <div class="main-grid">
+        <!-- Buy GT with USDT -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">💰</span>
+            <span>Buy GT with USDT</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="usdtAmount">USDT Amount</label>
+            <input
+              class="form-input"
+              type="number"
+              id="usdtAmount"
+              placeholder="Enter USDT amount"
+              step="0.01"
+              min="0"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="gtReceive">GT to Receive</label>
+            <input
+              class="form-input"
+              type="text"
+              id="gtReceive"
+              placeholder="GT amount"
+              readonly
+            />
+          </div>
+
+          <button id="buyBtn" class="btn btn-primary" disabled>
+            <span>Purchase GameTokens</span>
+          </button>
+
+          <button id="faucetBtn" class="btn btn-secondary" disabled>
+            <span>🚰 Get Test USDT</span>
+          </button>
+
+          <div class="info-text">
+            💡 1:1 conversion rate • No fees • Instant processing
+          </div>
+        </div>
+
+        <!-- Create/Stake Match -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">🎯</span>
+            <span>Create New Match</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="matchId"
+              >Match ID (Auto-generated)</label
+            >
+            <input
+              class="form-input"
+              type="text"
+              id="matchId"
+              placeholder="Will be auto-generated..."
+              readonly
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="player1"
+              >Player 1 Wallet Address</label
+            >
+            <input
+              class="form-input"
+              type="text"
+              id="player1"
+              placeholder="0x... (first player's wallet address)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="player2"
+              >Player 2 Wallet Address</label
+            >
+            <input
+              class="form-input"
+              type="text"
+              id="player2"
+              placeholder="0x... (second player's wallet address)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="stakeAmount"
+              >Stake Amount (GT)</label
+            >
+            <input
+              class="form-input"
+              type="number"
+              id="stakeAmount"
+              placeholder="Amount each player stakes"
+              step="0.01"
+              min="0"
+            />
+            <small
+              style="
+                color: var(--text-secondary);
+                font-size: 0.75rem;
+                margin-top: 0.25rem;
+                display: block;
+              "
+            >
+              Both players must stake exactly this amount
+            </small>
+          </div>
+
+          <button id="createMatchBtn" class="btn btn-success" disabled>
+            <span>🎮 Create Match</span>
+          </button>
+
+          <div class="info-text">
+            📝 Anyone can create matches for any two players. The assigned
+            players will see the match in their "My Matches" section and can
+            stake.
+          </div>
+        </div>
+
+        <!-- Realtime Matchmaking (Demo) -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">⚡</span>
+            <span>Realtime Matchmaking (Demo)</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="mmStake">Stake Amount (GT)</label>
+            <input
+              class="form-input"
+              type="number"
+              id="mmStake"
+              placeholder="e.g. 10"
+              step="0.01"
+              min="0"
+            />
+          </div>
+
+          <button id="findOpponentBtn" class="btn btn-primary" disabled>
+            <span>🔍 Find Opponent</span>
+          </button>
+
+          <div id="mmStatus" class="info-text" style="margin-top: 8px">
+            Connect wallet to use matchmaking
+          </div>
+
+          <div id="mmStakeConfirm" class="hidden" style="margin-top: 12px">
+            <button id="confirmStakeBtn" class="btn btn-warning">
+              <span>✅ Approve & Stake</span>
+            </button>
+            <div class="info-text">
+              Approve and stake the GT amount to enter escrow.
+            </div>
+          </div>
+
+          <div id="mmCancel" class="hidden" style="margin-top: 12px">
+            <button id="cancelMatchmakingBtn" class="btn btn-danger">
+              <span>❌ Cancel & Refund</span>
+            </button>
+            <div class="info-text">
+              Cancel matchmaking and get your stake back.
+            </div>
+          </div>
+
+          <div id="mmGame" class="hidden" style="margin-top: 16px">
+            <div id="mmTurn" class="info-text" style="margin-bottom: 8px"></div>
+            <div
+              id="mmBoard"
+              style="
+                display: grid;
+                grid-template-columns: repeat(3, 64px);
+                gap: 6px;
+              "
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Grid -->
+      <div class="bottom-grid">
+        <!-- My Matches -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">⚔️</span>
+            <span>My Matches</span>
+          </div>
+
+          <button
+            id="refreshMatchesBtn"
+            class="btn btn-secondary"
+            style="margin-bottom: 1rem; width: 100%"
+          >
+            <span>🔄 Refresh Matches</span>
+          </button>
+
+          <div class="events-container" id="myMatchesList">
+            <div class="event-item">
+              <div class="event-time">No matches found</div>
+              <div class="event-content">
+                Create a match or wait to be assigned to one
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: var(--space-6)">
+            <label class="form-label" for="manualMatchId"
+              >Or Join by Match ID</label
+            >
+            <input
+              class="form-input"
+              type="text"
+              id="manualMatchId"
+              placeholder="Enter full match ID (0x...)"
+            />
+          </div>
+
+          <button id="stakeInMatchBtn" class="btn btn-warning" disabled>
+            <span>⚡ Stake in Match</span>
+          </button>
+
+          <div class="info-text">
+            🏆 Winner takes all • Exactly 2x stake • Zero fees
+          </div>
+          <div
+            class="info-text"
+            style="margin-top: 10px; font-size: 0.9em; color: #888"
+          >
+            💡 <strong>Need GT tokens?</strong> Buy them with USDT in the "Buy
+            GT with USDT" section above!
+          </div>
+        </div>
+
+        <!-- Result Declaration -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">🏆</span>
+            <span>Declare Match Result</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="resultMatchId">Match ID</label>
+            <input
+              class="form-input"
+              type="text"
+              id="resultMatchId"
+              placeholder="Enter full match ID (0x...)"
+              style="width: 100%; margin-bottom: 10px"
+            />
+            <button
+              type="button"
+              id="refreshMatchBtn"
+              class="btn btn-secondary"
+              style="width: 100%; padding: 10px"
+            >
+              🔄 Refresh Match Data
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Select Winner</label>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-3);
+                margin-top: var(--space-2);
+              "
+            >
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: var(--space-2);
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="radio"
+                  name="winner"
+                  id="player1Winner"
+                  value=""
+                  style="margin: 0"
+                />
+                <span id="player1Label"
+                  >Player 1: Connect wallet to load match</span
+                >
+              </label>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: var(--space-2);
+                  cursor: pointer;
+                "
+              >
+                <input
+                  type="radio"
+                  name="winner"
+                  id="player2Winner"
+                  value=""
+                  style="margin: 0"
+                />
+                <span id="player2Label"
+                  >Player 2: Connect wallet to load match</span
+                >
+              </label>
+            </div>
+          </div>
+
+          <button id="declareResultBtn" class="btn btn-success" disabled>
+            <span>🏆 Announce Winner</span>
+          </button>
+
+          <div class="info-text">
+            🏆 Winner receives the complete escrow amount (2x stake). This
+            action is irreversible.
+          </div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">📋</span>
+            <span>Activity Feed</span>
+          </div>
+          <div class="events-container" id="eventsList">
+            <div class="event-item">
+              <div class="event-time">Waiting for activity...</div>
+              <div class="event-content">Connect wallet to start</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">🏆</span>
+            <span>Leaderboard</span>
+            <button
+              type="button"
+              onclick="loadLeaderboard()"
+              class="btn btn-secondary"
+              style="margin-left: auto; font-size: 0.8rem; padding: 5px 10px"
+            >
+              🔄 Refresh
+            </button>
+          </div>
+          <div
+            style="
+              font-size: 0.7rem;
+              color: #888;
+              text-align: center;
+              margin-bottom: 10px;
+            "
+          >
+            ⚡ Auto-refresh every 10 seconds
+          </div>
+          <div id="leaderboardList">
+            <div class="event-item">
+              <div class="event-time">Loading leaderboard...</div>
+              <div class="event-content">Click refresh to load</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account Overview -->
+        <div class="card">
+          <div class="section-header">
+            <span class="icon">🎮</span>
+            <span>Account Overview</span>
+          </div>
+
+          <div class="balance-details">
+            <h3>Balance Details</h3>
+            <div id="balanceDetails">
+              <div class="balance-grid">
+                <div class="balance-row">
+                  <span class="balance-row-label">Status</span>
+                  <span class="balance-row-value">Connect wallet</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Container -->
+      <div id="statusContainer"></div>
+    </div>
+
+    <script>
+      // Global variables
+      let provider;
+      let signer;
+      let userAddress;
+      let contracts = {};
+      let CONFIG = {};
+      let isConnected = false;
+      let assignedMatches = new Map(); // Track matches assigned to current user
+
+      // Contract ABIs
+      const ABIS = {
+        ERC20: [
+          "function balanceOf(address) view returns (uint256)",
+          "function approve(address,uint256) returns (bool)",
+          "function allowance(address,address) view returns (uint256)",
+        ],
+        TokenStore: [
+          "function buy(uint256) external",
+          "function getGTAmount(uint256) view returns (uint256)",
+        ],
+        PlayGame: [
+          "function createMatch(bytes32,address,address,uint256) external",
+          "function stake(bytes32) external",
+          "function getMatch(bytes32) view returns (tuple(bytes32,address,address,uint256,uint8,uint256,bool,bool))",
+        ],
+        MockUSDT: [
+          "function faucet() external",
+          "function faucetCooldown(address) view returns (uint256)",
+        ],
+      };
+
+      // DOM elements
+      const connectBtn = document.getElementById("connectBtn");
+      const connectBtnText = document.getElementById("connectBtnText");
+      const statusDot = document.getElementById("statusDot");
+      const connectionStatus = document.getElementById("connectionStatus");
+      const ethBalance = document.getElementById("ethBalance");
+      const gtBalance = document.getElementById("gtBalance");
+      const usdtBalance = document.getElementById("usdtBalance");
+      const usdtAmount = document.getElementById("usdtAmount");
+      const gtReceive = document.getElementById("gtReceive");
+      const buyBtn = document.getElementById("buyBtn");
+      const faucetBtn = document.getElementById("faucetBtn");
+      const matchId = document.getElementById("matchId");
+      const player1 = document.getElementById("player1");
+      const player2 = document.getElementById("player2");
+      const stakeAmount = document.getElementById("stakeAmount");
+      const createMatchBtn = document.getElementById("createMatchBtn");
+      const myMatchesList = document.getElementById("myMatchesList");
+      const refreshMatchesBtn = document.getElementById("refreshMatchesBtn");
+      const manualMatchId = document.getElementById("manualMatchId");
+      const stakeInMatchBtn = document.getElementById("stakeInMatchBtn");
+      const findOpponentBtn = document.getElementById("findOpponentBtn");
+      const mmStake = document.getElementById("mmStake");
+      const mmStatus = document.getElementById("mmStatus");
+      const mmStakeConfirm = document.getElementById("mmStakeConfirm");
+      const confirmStakeBtn = document.getElementById("confirmStakeBtn");
+      const mmCancel = document.getElementById("mmCancel");
+      const mmGame = document.getElementById("mmGame");
+      const mmBoard = document.getElementById("mmBoard");
+      const mmTurn = document.getElementById("mmTurn");
+      const resultMatchId = document.getElementById("resultMatchId");
+      const player1Winner = document.getElementById("player1Winner");
+      const player2Winner = document.getElementById("player2Winner");
+      const player1Label = document.getElementById("player1Label");
+      const player2Label = document.getElementById("player2Label");
+      const declareResultBtn = document.getElementById("declareResultBtn");
+      const eventsList = document.getElementById("eventsList");
+      const balanceDetails = document.getElementById("balanceDetails");
+      const statusContainer = document.getElementById("statusContainer");
+
+      // Initialize
+      async function init() {
+        try {
+          console.log("🚀 Initializing application...");
+
+          // Check backend status
+          console.log("🔍 Checking backend status...");
+          const response = await fetch("http://localhost:3000/health");
+          CONFIG = await response.json();
+          console.log("✅ Configuration loaded:", CONFIG.contracts);
+
+          // Check Hardhat node status
+          console.log("🔍 Checking Hardhat node status...");
+          try {
+            const hardhatResponse = await fetch("http://localhost:8545", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: "eth_blockNumber",
+                params: [],
+                id: 1,
+              }),
+            });
+            const hardhatData = await hardhatResponse.json();
+            console.log("✅ Hardhat node status:", hardhatData);
+          } catch (hardhatError) {
+            console.error("❌ Hardhat node not responding:", hardhatError);
+            showStatus("❌ Hardhat node not running", "error");
+          }
+
+          updateConnectionStatus(false);
+        } catch (error) {
+          console.error("❌ Failed to load configuration:", error);
+          showStatus("❌ Failed to connect to backend", "error");
+        }
+      }
+
+      // Validate network connection
+      async function validateNetwork() {
+        try {
+          console.log("🌐 Validating network connection...");
+
+          if (!window.ethereum) {
+            console.error("❌ MetaMask not detected");
+            return false;
+          }
+
+          console.log("🔍 Checking current network...");
+          const chainId = await window.ethereum.request({
+            method: "eth_chainId",
+          });
+          console.log("🔗 Current chainId:", chainId);
+
+          if (chainId !== "0x539") {
+            // 1337 in hex
+            console.error(
+              "❌ Wrong network! Expected 0x539 (1337), got:",
+              chainId
+            );
+
+            // Try to automatically switch to the correct network
+            try {
+              console.log("🔄 Attempting to switch to localhost network...");
+              await window.ethereum.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: "0x539" }],
+              });
+              console.log("✅ Successfully switched to localhost network");
+              return true;
+            } catch (switchError) {
+              console.error("❌ Failed to switch network:", switchError);
+
+              // If the network doesn't exist, try to add it
+              if (switchError.code === 4902) {
+                try {
+                  console.log("➕ Adding localhost network...");
+                  await window.ethereum.request({
+                    method: "wallet_addEthereumChain",
+                    params: [
+                      {
+                        chainId: "0x539",
+                        chainName: "Localhost 8545",
+                        nativeCurrency: {
+                          name: "Ether",
+                          symbol: "ETH",
+                          decimals: 18,
+                        },
+                        rpcUrls: ["http://127.0.0.1:8545"],
+                        blockExplorerUrls: [],
+                      },
+                    ],
+                  });
+                  console.log("✅ Successfully added localhost network");
+                  return true;
+                } catch (addError) {
+                  console.error("❌ Failed to add network:", addError);
+                }
+              }
+
+              showStatus("❌ Please switch to Localhost 8545 network", "error");
+              return false;
+            }
+          }
+
+          console.log("✅ Network validation successful");
+          return true;
+        } catch (error) {
+          console.error("❌ Network validation failed:", error);
+          return false;
+        }
+      }
+
+      // Try to bypass circuit breaker by using a different provider approach
+      async function createDirectProvider() {
+        try {
+          console.log(
+            "🔧 Creating direct provider to bypass circuit breaker..."
+          );
+
+          // Create a direct provider that bypasses MetaMask's circuit breaker
+          const directProvider = new ethers.JsonRpcProvider(
+            "http://127.0.0.1:8545"
+          );
+
+          // Test the direct connection
+          const blockNumber = await directProvider.getBlockNumber();
+          console.log(
+            "✅ Direct provider connected, block number:",
+            blockNumber
+          );
+
+          return directProvider;
+        } catch (error) {
+          console.error("❌ Direct provider failed:", error);
+          return null;
+        }
+      }
+
+      // Bypass circuit breaker by trying multiple approaches
+      async function bypassCircuitBreaker() {
+        console.log("🔄 Attempting to bypass circuit breaker...");
+
+        // Method 1: Try direct provider
+        console.log("🔧 Method 1: Trying direct provider...");
+        const directProvider = await createDirectProvider();
+        if (directProvider) {
+          console.log("✅ Direct provider successful!");
+          return directProvider;
+        }
+
+        // Method 2: Try different RPC URL
+        console.log("🔧 Method 2: Trying different RPC URL...");
+        try {
+          const altProvider = new ethers.JsonRpcProvider(
+            "http://localhost:8545"
+          );
+          const blockNumber = await altProvider.getBlockNumber();
+          console.log("✅ Alternative RPC URL successful!");
+          return altProvider;
+        } catch (error) {
+          console.error("❌ Alternative RPC URL failed:", error);
+        }
+
+        // Method 3: Try with different network settings
+        console.log("🔧 Method 3: Trying to switch network...");
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x539" }],
+          });
+          console.log("✅ Network switch successful!");
+          return provider;
+        } catch (error) {
+          console.error("❌ Network switch failed:", error);
+        }
+
+        console.log("❌ All bypass methods failed");
+        return null;
+      }
+
+      // Update connection status
+      function updateConnectionStatus(connected) {
+        isConnected = connected;
+
+        if (connected) {
+          connectBtnText.textContent = "Connected";
+          connectBtn.classList.remove("btn-primary");
+          connectBtn.classList.add("btn-success");
+          connectBtn.disabled = true;
+          statusDot.classList.add("connected");
+          connectionStatus.textContent = `Connected: ${userAddress?.slice(
+            0,
+            6
+          )}...${userAddress?.slice(-4)}`;
+        } else {
+          connectBtnText.textContent = "Connect Wallet";
+          connectBtn.classList.remove("btn-success");
+          connectBtn.classList.add("btn-primary");
+          connectBtn.disabled = false;
+          statusDot.classList.remove("connected");
+          connectionStatus.textContent = "Not Connected";
+        }
+      }
+
+      // Connect wallet
+      connectBtn.onclick = async () => {
+        try {
+          console.log("🔗 Starting wallet connection...");
+
+          if (!window.ethereum) {
+            console.error("❌ MetaMask not detected");
+            showStatus("❌ MetaMask not detected", "error");
+            return;
+          }
+
+          console.log("✅ MetaMask detected, requesting accounts...");
+          connectBtn.innerHTML =
+            '<div class="spinner"></div><span>Connecting...</span>';
+
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          console.log("📋 Accounts received:", accounts);
+
+          // Validate network
+          console.log("🌐 Validating network...");
+          const networkValid = await validateNetwork();
+          if (!networkValid) {
+            console.error("❌ Network validation failed");
+            connectBtn.innerHTML = "<span>Connect Wallet</span>";
+            return;
+          }
+
+          console.log("🔧 Creating provider...");
+          provider = new ethers.BrowserProvider(window.ethereum);
+          console.log("🔧 Getting signer...");
+          signer = await provider.getSigner();
+          userAddress = accounts[0];
+          console.log("👤 User address:", userAddress);
+
+          console.log("🌐 Getting network info...");
+          const network = await provider.getNetwork();
+          console.log("🌐 Connected to network:", network);
+
+          console.log("📋 Contract addresses from config:", CONFIG.contracts);
+
+          console.log("🔧 Initializing GameToken contract...");
+          contracts.gameToken = new ethers.Contract(
+            CONFIG.contracts.GAME_TOKEN,
+            ABIS.ERC20,
+            signer
+          );
+          console.log("🔧 Initializing TokenStore contract...");
+          contracts.tokenStore = new ethers.Contract(
+            CONFIG.contracts.TOKEN_STORE,
+            ABIS.TokenStore,
+            signer
+          );
+          console.log("🔧 Initializing PlayGame contract...");
+          contracts.playGame = new ethers.Contract(
+            CONFIG.contracts.PLAY_GAME,
+            ABIS.PlayGame,
+            signer
+          );
+          console.log("🔧 Initializing MockUSDT contract...");
+          contracts.mockUsdt = new ethers.Contract(
+            CONFIG.contracts.MOCK_USDT,
+            ABIS.ERC20.concat(ABIS.MockUSDT),
+            signer
+          );
+
+          console.log("✅ All contracts initialized");
+          updateConnectionStatus(true);
+
+          console.log("💰 Updating balances...");
+          await updateBalances();
+
+          // Start auto-refresh for balances
+          startBalanceAutoRefresh();
+
+          // Enable buttons
+          buyBtn.disabled = false;
+          createMatchBtn.disabled = false;
+          stakeInMatchBtn.disabled = false;
+          declareResultBtn.disabled = false;
+          faucetBtn.disabled = false;
+          findOpponentBtn.disabled = false;
+
+          console.log("🎮 Loading assigned matches...");
+          await loadAssignedMatches();
+
+          console.log("🏆 Loading leaderboard...");
+          await loadLeaderboard();
+
+          // Start auto-refresh for leaderboard
+          startLeaderboardAutoRefresh();
+
+          console.log("✅ Wallet connection complete!");
+          showStatus("✅ Wallet connected successfully!", "success");
+          addEvent("🎉 Wallet connected and ready");
+          setupMatchmaking();
+        } catch (error) {
+          console.error("❌ Wallet connection failed:", error);
+          showStatus("❌ Connection failed: " + error.message, "error");
+          connectBtn.innerHTML = "<span>Connect Wallet</span>";
+        }
+      };
+
+      // ======== Realtime Matchmaking (Demo) ========
+      let socket;
+      const MATCHMAKING_URL = "http://localhost:3002";
+      const mmState = {
+        socketMatchId: null,
+        blockchainMatchId: null,
+        player1: null,
+        player2: null,
+        stake: null,
+        mySymbol: null,
+        isMyTurn: false,
+        preStaked: false,
+      };
+
+      function setupMatchmaking() {
+        try {
+          if (!window.io) {
+            console.warn("Socket.IO not loaded");
+            return;
+          }
+          socket = io(MATCHMAKING_URL, { transports: ["websocket"] });
+          mmStatus.textContent =
+            "Connected to matchmaking. Enter stake and click Find Opponent.";
+
+          // Matchmaking status updates
+          socket.on("matchmakingStatus", (data) => {
+            mmStatus.textContent = data.message || data.status;
+
+            if (data.status === "waiting") {
+              mmCancel.classList.remove("hidden");
+              findOpponentBtn.disabled = true;
+            } else if (data.status === "matched") {
+              mmCancel.classList.add("hidden");
+            } else if (data.status === "cancelled") {
+              mmCancel.classList.add("hidden");
+              findOpponentBtn.disabled = false;
+              mmState.preStaked = false;
+            }
+          });
+
+          // Match found
+          socket.on("matchFound", (matchData) => {
+            mmState.socketMatchId = matchData.matchId;
+            mmState.player1 = matchData.player1;
+            mmState.player2 = matchData.player2;
+            mmState.stake = matchData.stake;
+            mmStatus.textContent = `Match found! ${short(
+              matchData.player1
+            )} vs ${short(matchData.player2)} • Stake ${matchData.stake} GT`;
+
+            // Both players have already pre-staked, so create the match on-chain
+            createMatchOnChain(matchData);
+          });
+
+          // Game start
+          socket.on("gameStart", ({ matchId, symbol, isFirst }) => {
+            if (matchId !== mmState.socketMatchId) return;
+            mmState.mySymbol = symbol;
+            mmState.isMyTurn = !!isFirst;
+            mmGame.classList.remove("hidden");
+            buildBoard();
+            updateTurnText();
+          });
+
+          // Opponent move
+          socket.on("moveMade", ({ row, col, symbol, nextPlayer }) => {
+            const idx = row * 3 + col;
+            const cell = mmBoard.children[idx];
+            if (cell && !cell.textContent) {
+              cell.textContent = symbol;
+            }
+            mmState.isMyTurn = nextPlayer === mmState.mySymbol;
+            updateTurnText();
+          });
+
+          // Game end
+          socket.on(
+            "gameEnd",
+            async ({ winner, winnerAddress, finalBoard }) => {
+              if (finalBoard) {
+                finalBoard.forEach((v, i) => {
+                  if (v && mmBoard.children[i])
+                    mmBoard.children[i].textContent = v;
+                });
+              }
+              if (winnerAddress) {
+                mmStatus.textContent = `Game over. Winner: ${short(
+                  winnerAddress
+                )}. Submitting result on-chain...`;
+                // Only winner submits result to avoid duplicate submissions
+                if (
+                  winnerAddress.toLowerCase() === userAddress.toLowerCase() &&
+                  mmState.blockchainMatchId
+                ) {
+                  try {
+                    const resp = await fetch(
+                      "http://localhost:3000/match/result",
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          matchId: mmState.blockchainMatchId,
+                          winner: winnerAddress,
+                        }),
+                      }
+                    );
+                    const data = await resp.json();
+                    if (!resp.ok)
+                      throw new Error(data.error || "Commit failed");
+                    mmStatus.textContent = `Result submitted. Tx: ${short(
+                      data.txHash
+                    )}`;
+                  } catch (e) {
+                    console.error(e);
+                    mmStatus.textContent = `Failed to submit result: ${e.message}`;
+                  }
+                }
+              } else {
+                mmStatus.textContent = "Game ended in a draw.";
+              }
+            }
+          );
+        } catch (err) {
+          console.error("Matchmaking setup failed", err);
+        }
+      }
+
+      function short(addr) {
+        if (!addr) return "";
+        return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+      }
+
+      function buildBoard() {
+        mmBoard.innerHTML = "";
+        for (let i = 0; i < 9; i++) {
+          const btn = document.createElement("button");
+          btn.className = "btn btn-secondary";
+          btn.style.width = "64px";
+          btn.style.height = "64px";
+          btn.style.fontSize = "20px";
+          btn.style.padding = "0";
+          btn.onclick = () => doMove(i);
+          mmBoard.appendChild(btn);
+        }
+      }
+
+      function updateTurnText() {
+        mmTurn.textContent = mmState.isMyTurn ? "Your turn" : "Opponent's turn";
+      }
+
+      async function doMove(index) {
+        if (!mmState.isMyTurn) return;
+        const row = Math.floor(index / 3);
+        const col = index % 3;
+        socket.emit("makeMove", {
+          matchId: mmState.socketMatchId,
+          row,
+          col,
+          symbol: mmState.mySymbol,
+        });
+      }
+
+      async function createMatchOnChain(matchData) {
+        try {
+          // Create match on-chain via backend (uses operator wallet)
+          const resp = await fetch("http://localhost:3000/match/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              p1: matchData.player1,
+              p2: matchData.player2,
+              stake: matchData.stake,
+              matchId: matchData.matchId,
+            }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || "Failed to create match");
+
+          mmState.blockchainMatchId = data.matchId;
+
+          // Notify matchmaking server that match is created
+          socket.emit("matchCreated", {
+            matchId: matchData.matchId,
+            player1: matchData.player1,
+            player2: matchData.player2,
+            stake: matchData.stake,
+            blockchainMatchId: data.matchId,
+          });
+        } catch (e) {
+          console.error(e);
+          mmStatus.textContent = `Failed to create match: ${e.message}`;
+        }
+      }
+
+      findOpponentBtn.onclick = async () => {
+        if (!socket) return;
+        const stake = parseFloat(mmStake.value);
+        if (!stake || stake <= 0) {
+          mmStatus.textContent = "Enter a valid stake amount";
+          return;
+        }
+
+        try {
+          // First, pre-stake the amount on-chain
+          const amountWei = ethers.parseUnits(String(stake), 18);
+
+          // 1) Approve spending
+          const approveTx = await contracts.gameToken.approve(
+            CONFIG.contracts.PLAY_GAME,
+            amountWei
+          );
+          await approveTx.wait();
+
+          // 2) Pre-stake tokens (this will be refunded if no match found)
+          const preStakeTx = await contracts.playGame.stake(
+            ethers.keccak256(
+              ethers.solidityPacked(
+                ["string"],
+                [`pre_stake_${userAddress}_${Date.now()}`]
+              )
+            )
+          );
+          await preStakeTx.wait();
+
+          // 3) Notify matchmaking server
+          socket.emit("findMatch", {
+            address: userAddress,
+            stake: parseInt(stake),
+          });
+
+          mmState.preStaked = true;
+          mmStatus.textContent = "Stake confirmed. Searching for opponent...";
+        } catch (e) {
+          console.error(e);
+          mmStatus.textContent = `Failed to pre-stake: ${e.message}`;
+        }
+      };
+
+      // Cancel matchmaking button
+      document.getElementById("cancelMatchmakingBtn").onclick = async () => {
+        if (!socket || !mmState.preStaked) return;
+
+        try {
+          socket.emit("cancelMatchmaking", { address: userAddress });
+
+          // Call refund API to get the pre-staked amount back
+          const resp = await fetch(
+            "http://localhost:3000/match/refund-prestake",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                player: userAddress,
+                amount: mmState.stake || mmStake.value,
+              }),
+            }
+          );
+
+          if (resp.ok) {
+            const data = await resp.json();
+            mmStatus.textContent = `Refund successful! Tx: ${short(
+              data.txHash
+            )}`;
+            mmState.preStaked = false;
+          } else {
+            const error = await resp.json();
+            mmStatus.textContent = `Refund failed: ${error.error}`;
+          }
+        } catch (e) {
+          console.error(e);
+          mmStatus.textContent = `Failed to cancel: ${e.message}`;
+        }
+      };
+
+      // Update balances
+      async function updateBalances() {
+        try {
+          const ethBal = await provider.getBalance(userAddress);
+          ethBalance.textContent = parseFloat(
+            ethers.formatEther(ethBal)
+          ).toFixed(4);
+
+          if (contracts.gameToken) {
+            const gtBal = await contracts.gameToken.balanceOf(userAddress);
+            gtBalance.textContent = parseFloat(
+              ethers.formatEther(gtBal)
+            ).toFixed(2);
+          }
+
+          if (contracts.mockUsdt) {
+            const usdtBal = await contracts.mockUsdt.balanceOf(userAddress);
+            usdtBalance.textContent = parseFloat(
+              ethers.formatUnits(usdtBal, 6)
+            ).toFixed(2);
+          }
+
+          // Update detailed view
+          balanceDetails.innerHTML = `
+                                  <div class="balance-grid">
+            <div class="balance-row">
+              <span class="balance-row-label">💎 ETH</span>
+              <span class="balance-row-value">${ethBalance.textContent}</span>
+            </div>
+            <div class="balance-row">
+              <span class="balance-row-label">🎮 Game Tokens</span>
+              <span class="balance-row-value">${gtBalance.textContent} GT</span>
+            </div>
+            <div class="balance-row">
+              <span class="balance-row-label">💰 USDT</span>
+              <span class="balance-row-value">${usdtBalance.textContent} USDT</span>
+            </div>
+            <div class="balance-row">
+              <span class="balance-row-label">🔗 Network</span>
+              <span class="balance-row-value">Localhost</span>
+            </div>
+          </div>
+          <div class="address-display">
+            <strong>Address:</strong><br>${userAddress}
+          </div>
+          <div style="margin-top: 10px; text-align: center;">
+            <button 
+              type="button" 
+              onclick="updateBalances()" 
+              class="btn btn-secondary"
+              style="font-size: 0.8rem; padding: 5px 10px;"
+            >
+              🔄 Refresh Balances
+            </button>
+            <div style="font-size: 0.7rem; color: #888; margin-top: 5px;">
+              ⚡ Auto-refresh every 5 seconds
+            </div>
+          </div>
+                      `;
+        } catch (error) {
+          console.error("Balance update failed:", error);
+        }
+      }
+
+      // Auto-refresh balances periodically
+      let balanceRefreshInterval;
+      function startBalanceAutoRefresh() {
+        if (balanceRefreshInterval) {
+          clearInterval(balanceRefreshInterval);
+        }
+        // Refresh balances every 5 seconds when connected
+        balanceRefreshInterval = setInterval(async () => {
+          if (isConnected && userAddress) {
+            await updateBalances();
+          }
+        }, 5000);
+      }
+
+      function stopBalanceAutoRefresh() {
+        if (balanceRefreshInterval) {
+          clearInterval(balanceRefreshInterval);
+          balanceRefreshInterval = null;
+        }
+      }
+
+      // Calculate GT amount
+      usdtAmount.oninput = async () => {
+        if (!contracts.tokenStore || !usdtAmount.value) {
+          gtReceive.value = "";
+          return;
+        }
+
+        try {
+          const usdtWei = ethers.parseUnits(usdtAmount.value, 6);
+          const gtAmount = await contracts.tokenStore.getGTAmount(usdtWei);
+          gtReceive.value = ethers.formatEther(gtAmount);
+        } catch (error) {
+          gtReceive.value = "Error";
+        }
+      };
+
+      // Faucet
+      faucetBtn.onclick = async () => {
+        try {
+          console.log("🚰 Starting faucet process...");
+          console.log("👤 User address:", userAddress);
+          console.log("💰 MockUSDT contract:", CONFIG.contracts.MOCK_USDT);
+
+          showStatus("🚰 Getting test USDT...", "warning");
+          faucetBtn.innerHTML =
+            '<div class="spinner"></div><span>Getting...</span>';
+
+          console.log("⛽ Estimating gas for faucet...");
+          const gasEstimate = await contracts.mockUsdt.faucet.estimateGas();
+          const gasLimit = (gasEstimate * 120n) / 100n;
+          console.log("⛽ Faucet gas estimate:", gasEstimate.toString());
+          console.log("⛽ Faucet gas limit:", gasLimit.toString());
+
+          console.log("📝 Sending faucet transaction...");
+          const tx = await contracts.mockUsdt.faucet({ gasLimit });
+          console.log("📝 Faucet transaction sent:", tx.hash);
+          console.log("⏳ Waiting for faucet confirmation...");
+          await tx.wait();
+          console.log("✅ Faucet transaction confirmed");
+
+          await updateBalances();
+          faucetBtn.innerHTML = "<span>🚰 Get Test USDT</span>";
+          showStatus("🎉 Received 1000 test USDT!", "success");
+          addEvent("💰 Received 1000 USDT from faucet");
+        } catch (error) {
+          console.error("❌ Faucet failed:", error);
+          console.error("❌ Faucet error details:", {
+            message: error.message,
+            code: error.code,
+            data: error.data,
+            transaction: error.transaction,
+          });
+
+          if (error.message.includes("circuit breaker")) {
+            console.error(
+              "🔧 Circuit breaker detected in faucet - attempting bypass..."
+            );
+            showStatus(
+              "🔄 Circuit breaker detected, attempting bypass...",
+              "warning"
+            );
+
+            // Try to bypass the circuit breaker
+            const bypassProvider = await bypassCircuitBreaker();
+            if (bypassProvider) {
+              console.log("✅ Bypass successful, retrying faucet...");
+              showStatus("✅ Bypass successful, retrying...", "success");
+
+              try {
+                // Create new contract with bypass provider
+                const bypassSigner = bypassProvider.getSigner(userAddress);
+                const bypassMockUsdt = new ethers.Contract(
+                  CONFIG.contracts.MOCK_USDT,
+                  ABIS.ERC20.concat(ABIS.MockUSDT),
+                  bypassSigner
+                );
+
+                console.log("🚰 Retrying faucet with bypass provider...");
+                const bypassTx = await bypassMockUsdt.faucet({ gasLimit });
+                await bypassTx.wait();
+                console.log("✅ Faucet successful with bypass!");
+
+                await updateBalances();
+                faucetBtn.innerHTML = "<span>🚰 Get Test USDT</span>";
+                showStatus("🎉 Received 1000 test USDT!", "success");
+                addEvent("💰 Received 1000 USDT from faucet");
+                return;
+              } catch (bypassError) {
+                console.error("❌ Bypass retry failed:", bypassError);
+              }
+            }
+          }
+
+          faucetBtn.innerHTML = "<span>🚰 Get Test USDT</span>";
+
+          if (error.message.includes("circuit breaker")) {
+            showStatus(
+              "❌ MetaMask blocked faucet. Try the bypass button below.",
+              "error"
+            );
+
+            // Add a bypass button for faucet
+            setTimeout(() => {
+              const faucetBypassBtn = document.createElement("button");
+              faucetBypassBtn.className = "btn btn-primary";
+              faucetBypassBtn.style.marginTop = "10px";
+              faucetBypassBtn.innerHTML = "🔄 Try Faucet Bypass";
+              faucetBypassBtn.onclick = async () => {
+                console.log("🔄 Manual faucet bypass attempt...");
+                showStatus("🔄 Attempting manual faucet bypass...", "warning");
+
+                const bypassProvider = await bypassCircuitBreaker();
+                if (bypassProvider) {
+                  try {
+                    const bypassSigner = bypassProvider.getSigner(userAddress);
+                    const bypassMockUsdt = new ethers.Contract(
+                      CONFIG.contracts.MOCK_USDT,
+                      ABIS.ERC20.concat(ABIS.MockUSDT),
+                      bypassSigner
+                    );
+
+                    const gasEstimate =
+                      await bypassMockUsdt.faucet.estimateGas();
+                    const gasLimit = (gasEstimate * 120n) / 100n;
+
+                    const bypassTx = await bypassMockUsdt.faucet({ gasLimit });
+                    await bypassTx.wait();
+
+                    await updateBalances();
+                    showStatus("🎉 Faucet successful with bypass!", "success");
+                    addEvent("💰 Received 1000 USDT from faucet (bypass)");
+                  } catch (bypassError) {
+                    console.error(
+                      "❌ Manual faucet bypass failed:",
+                      bypassError
+                    );
+                    showStatus(
+                      "❌ Manual bypass failed: " + bypassError.message,
+                      "error"
+                    );
+                  }
+                } else {
+                  showStatus(
+                    "❌ Bypass failed. Please reset network settings.",
+                    "error"
+                  );
+                }
+              };
+              const statusMessage = document.querySelector(".status-message");
+              if (statusMessage) {
+                statusMessage.appendChild(faucetBypassBtn);
+              }
+            }, 1000);
+          } else {
+            showStatus("❌ Faucet failed: " + error.message, "error");
+          }
+        }
+      };
+
+      // Buy GT
+      buyBtn.onclick = async () => {
+        try {
+          const amount = parseFloat(usdtAmount.value);
+          if (!amount || amount <= 0) {
+            showStatus("⚠️ Enter valid USDT amount", "warning");
+            return;
+          }
+
+          showStatus("⏳ Purchasing GT tokens...", "warning");
+          buyBtn.innerHTML =
+            '<div class="spinner"></div><span>Purchasing...</span>';
+
+          const usdtWei = ethers.parseUnits(amount.toString(), 6);
+
+          // Approve USDT
+          const approveGas = await contracts.mockUsdt.approve.estimateGas(
+            CONFIG.contracts.TOKEN_STORE,
+            usdtWei
+          );
+          const approveTx = await contracts.mockUsdt.approve(
+            CONFIG.contracts.TOKEN_STORE,
+            usdtWei,
+            { gasLimit: (approveGas * 120n) / 100n }
+          );
+          await approveTx.wait();
+
+          // Purchase tokens
+          const purchaseGas = await contracts.tokenStore.buy.estimateGas(
+            usdtWei
+          );
+          const purchaseTx = await contracts.tokenStore.buy(usdtWei, {
+            gasLimit: (purchaseGas * 120n) / 100n,
+          });
+          await purchaseTx.wait();
+
+          await updateBalances();
+          usdtAmount.value = "";
+          gtReceive.value = "";
+          buyBtn.innerHTML = "<span>Purchase GameTokens</span>";
+
+          showStatus("🎉 GT tokens purchased!", "success");
+          addEvent(`🛒 Purchased ${amount} GT with ${amount} USDT`);
+        } catch (error) {
+          console.error(error);
+          buyBtn.innerHTML = "<span>Purchase GameTokens</span>";
+          showStatus("❌ Purchase failed: " + error.message, "error");
+        }
+      };
+
+      // Create Match
+      createMatchBtn.onclick = async () => {
+        try {
+          const player1Value = player1.value.trim();
+          const player2Value = player2.value.trim();
+          const stakeValue = parseFloat(stakeAmount.value);
+
+          if (!player1Value || !player2Value || !stakeValue) {
+            showStatus(
+              "⚠️ Enter both player addresses and stake amount",
+              "warning"
+            );
+            return;
+          }
+
+          if (!ethers.isAddress(player1Value)) {
+            showStatus("⚠️ Invalid Player 1 address", "warning");
+            return;
+          }
+
+          if (!ethers.isAddress(player2Value)) {
+            showStatus("⚠️ Invalid Player 2 address", "warning");
+            return;
+          }
+
+          if (player1Value.toLowerCase() === player2Value.toLowerCase()) {
+            showStatus("⚠️ Player addresses cannot be the same", "warning");
+            return;
+          }
+
+          // Debug logging
+          console.log("Creating match with:", {
+            p1: player1Value,
+            p2: player2Value,
+            stake: stakeValue,
+            createdBy: userAddress,
+          });
+
+          showStatus("⏳ Creating match...", "warning");
+          createMatchBtn.innerHTML =
+            '<div class="spinner"></div><span>Creating...</span>';
+
+          const requestBody = {
+            p1: player1Value,
+            p2: player2Value,
+            stake: stakeValue,
+          };
+
+          console.log("Sending request:", requestBody);
+
+          const response = await fetch(
+            `http://localhost:3000/match/start?t=${Date.now()}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(requestBody),
+            }
+          );
+
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || "Match creation failed");
+          }
+
+          // Clear form and update UI
+          matchId.value = result.matchIdString || ""; // Show generated ID for reference
+          player1.value = "";
+          player2.value = "";
+          stakeAmount.value = "";
+          createMatchBtn.innerHTML = "<span>🎮 Create Match</span>";
+
+          showStatus("🎉 Match created successfully!", "success");
+          addEvent(
+            `🎯 Created match "${result.matchIdString}" - ${player1Value.slice(
+              0,
+              6
+            )}...${player1Value.slice(-4)} vs ${player2Value.slice(
+              0,
+              6
+            )}...${player2Value.slice(-4)} (${stakeValue} GT each)`
+          );
+
+          // Refresh assigned matches to show the new match
+          setTimeout(async () => {
+            await loadAssignedMatches();
+          }, 1000); // Small delay to ensure blockchain state is updated
+        } catch (error) {
+          console.error(error);
+          createMatchBtn.innerHTML = "<span>🎮 Create Match</span>";
+          showStatus("❌ Match creation failed: " + error.message, "error");
+        }
+      };
+
+      // Refresh matches button
+      refreshMatchesBtn.onclick = async () => {
+        if (!userAddress) {
+          showStatus("⚠️ Connect wallet first", "warning");
+          return;
+        }
+
+        refreshMatchesBtn.innerHTML =
+          '<div class="spinner"></div><span>Refreshing...</span>';
+
+        try {
+          await loadAssignedMatches();
+          showStatus("✅ Matches refreshed", "success");
+        } catch (error) {
+          console.error("Refresh failed:", error);
+          showStatus("❌ Refresh failed: " + error.message, "error");
+        }
+
+        refreshMatchesBtn.innerHTML = "<span>🔄 Refresh Matches</span>";
+      };
+
+      // Load assigned matches for current user
+      async function loadAssignedMatches() {
+        if (!userAddress || !contracts.playGame) return;
+
+        try {
+          console.log("Loading assigned matches for:", userAddress);
+          console.log("Using contract address:", CONFIG.contracts.PLAY_GAME);
+          console.log("Provider network:", await provider.getNetwork());
+
+          // Debug MetaMask connection
+          try {
+            const rpcUrl = await window.ethereum.request({
+              method: "eth_chainId",
+            });
+            console.log("MetaMask chainId:", rpcUrl);
+
+            // Check what network MetaMask thinks it's on
+            const networkVersion = await window.ethereum.request({
+              method: "net_version",
+            });
+            console.log("MetaMask network version:", networkVersion);
+          } catch (err) {
+            console.log("MetaMask debug failed:", err);
+          }
+
+          // Clear existing matches
+          assignedMatches.clear();
+
+          // Get MatchCreated events - try direct approach
+          try {
+            const eventTopic = ethers.id(
+              "MatchCreated(bytes32,address,address,uint256)"
+            );
+            // Query all events from contract (workaround for MetaMask filtering issue)
+            const allLogsFilter = {
+              address: CONFIG.contracts.PLAY_GAME,
+              fromBlock: 0,
+              toBlock: "latest",
+            };
+
+            // Use broader query and filter in JS (workaround for MetaMask/ethers.js filtering bug)
+            const allLogsFromContract = await provider.getLogs(allLogsFilter);
+            const logs = allLogsFromContract.filter(
+              (log) => log.topics[0] === eventTopic
+            );
+            console.log("Found MatchCreated events:", logs.length);
+
+            for (const log of logs) {
+              // Decode manually since event has indexed parameters
+              const matchId = log.topics[1]; // First indexed parameter
+              const p1 = "0x" + log.topics[2].slice(-40); // Second indexed parameter
+              const p2 = "0x" + log.topics[3].slice(-40); // Third indexed parameter
+              const stake = ethers.getBigInt(log.data); // Non-indexed parameter
+
+              // Check if current user is either player
+              if (
+                p1.toLowerCase() === userAddress.toLowerCase() ||
+                p2.toLowerCase() === userAddress.toLowerCase()
+              ) {
+                console.log("Found assigned match:", matchId.toString());
+
+                // Get actual match status from blockchain
+                try {
+                  const matchData = await contracts.playGame.getMatch(matchId);
+                  console.log("Match data from blockchain:", matchData);
+
+                  assignedMatches.set(matchId.toString(), {
+                    matchId: matchId.toString(),
+                    matchIdString: `match_${Date.now()}`, // Generate readable ID
+                    p1,
+                    p2,
+                    stake: ethers.formatEther(stake),
+                    status: matchData[4], // MatchStatus enum
+                    p1Staked: matchData[6], // p1Staked boolean
+                    p2Staked: matchData[7], // p2Staked boolean
+                    startTime: matchData[5], // startTime
+                  });
+                } catch (matchError) {
+                  console.error("Error fetching match data:", matchError);
+                  // Fallback to event data only
+                  assignedMatches.set(matchId.toString(), {
+                    matchId: matchId.toString(),
+                    matchIdString: `match_${Date.now()}`, // Generate readable ID
+                    p1,
+                    p2,
+                    stake: ethers.formatEther(stake),
+                    status: 0, // Assume CREATED status from event
+                    p1Staked: false, // Will be updated when staking events are processed
+                    p2Staked: false, // Will be updated when staking events are processed
+                  });
+                }
+              }
+            }
+          } catch (eventError) {
+            console.error("Error fetching events:", eventError);
+            // Fall back to empty list if event fetching fails
+          }
+
+          // Update the UI
+          refreshMatchesList();
+        } catch (error) {
+          console.error("Error loading assigned matches:", error);
+        }
+      }
+
+      // Refresh the matches list UI
+      function refreshMatchesList() {
+        if (assignedMatches.size === 0) {
+          myMatchesList.innerHTML = `
+                        <div class="event-item">
+                          <div class="event-time">No matches found</div>
+                          <div class="event-content">Create a match or wait to be assigned to one</div>
+                                    </div>
+                                `;
+          return;
+        }
+
+        myMatchesList.innerHTML = "";
+
+        for (const [matchId, matchData] of assignedMatches) {
+          addMatchToList(
+            matchData.matchIdString,
+            matchData.matchId,
+            matchData.p1,
+            matchData.p2,
+            matchData.stake,
+            matchData.p1Staked,
+            matchData.p2Staked
+          );
+        }
+      }
+
+      // Add match to "My Matches" list
+      function addMatchToList(
+        matchIdString,
+        matchIdBytes32,
+        p1,
+        p2,
+        stake,
+        p1Staked,
+        p2Staked
+      ) {
+        const isMyTurn =
+          (userAddress.toLowerCase() === p1.toLowerCase() && !p1Staked) ||
+          (userAddress.toLowerCase() === p2.toLowerCase() && !p2Staked);
+
+        const matchItem = document.createElement("div");
+        matchItem.className = "event-item";
+        matchItem.style.cursor = isMyTurn ? "pointer" : "default";
+
+        const statusText =
+          p1Staked && p2Staked
+            ? "🎉 Both Staked - Ready!"
+            : p1Staked
+            ? "⏳ Player 1 Staked - Waiting for Player 2"
+            : p2Staked
+            ? "⏳ Player 2 Staked - Waiting for Player 1"
+            : "⏳ Waiting for Both Players to Stake";
+
+        const role =
+          userAddress.toLowerCase() === p1.toLowerCase()
+            ? "Player 1"
+            : "Player 2";
+        const myStakeStatus =
+          (userAddress.toLowerCase() === p1.toLowerCase() && p1Staked) ||
+          (userAddress.toLowerCase() === p2.toLowerCase() && p2Staked)
+            ? "✅ You Staked"
+            : "❌ You Need to Stake";
+
+        // Show opponent's staking status
+        const opponentStaked =
+          (userAddress.toLowerCase() === p1.toLowerCase() && p2Staked) ||
+          (userAddress.toLowerCase() === p2.toLowerCase() && p1Staked);
+        const opponentStatus = opponentStaked
+          ? "✅ Opponent Staked"
+          : "⏳ Opponent Not Staked";
+
+        matchItem.innerHTML = `
+                      <div class="event-time">${matchIdString} • ${stake} GT • ${statusText}</div>
+                      <div class="event-content">
+                        <div style="margin-bottom: 0.5rem;">
+                          <strong>${role}</strong> • ${myStakeStatus}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                          <div>👤 Opponent: ${
+                            role === "Player 1"
+                              ? p2.slice(0, 6) + "..." + p2.slice(-4)
+                              : p1.slice(0, 6) + "..." + p1.slice(-4)
+                          }</div>
+                          <div>${opponentStatus}</div>
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); word-break: break-all;">
+                          Match ID: ${matchIdBytes32}
+                        </div>
+                      </div>
+                    `;
+
+        if (isMyTurn) {
+          matchItem.onclick = () => stakeInMatch(matchIdBytes32, stake);
+          matchItem.style.borderLeftColor = "var(--border-neon)";
+        }
+
+        // Remove "No matches found" if it exists
+        if (
+          myMatchesList.children[0]?.textContent?.includes("No matches found")
+        ) {
+          myMatchesList.innerHTML = "";
+        }
+
+        myMatchesList.appendChild(matchItem);
+      }
+
+      // Stake in a specific match
+      async function stakeInMatch(matchIdBytes32, stakeAmount) {
+        try {
+          console.log("🎯 Starting staking process...");
+          console.log("🎯 Match ID:", matchIdBytes32);
+          console.log("🎯 Stake Amount:", stakeAmount);
+          console.log("👤 User address:", userAddress);
+          console.log("🎮 PlayGame contract:", CONFIG.contracts.PLAY_GAME);
+          console.log("🎮 GameToken contract:", CONFIG.contracts.GAME_TOKEN);
+
+          showStatus("⏳ Checking GT balance...", "warning");
+
+          // Check GT balance first
+          console.log("💰 Checking GT balance...");
+          let gtBalance;
+          try {
+            gtBalance = await contracts.gameToken.balanceOf(userAddress);
+            console.log(
+              "✅ GT balance check successful:",
+              ethers.formatEther(gtBalance)
+            );
+          } catch (error) {
+            console.error("❌ GT balance check failed:", error);
+            console.error("❌ Error details:", {
+              message: error.message,
+              code: error.code,
+              data: error.data,
+            });
+            showStatus(
+              "❌ Cannot check GT balance. Please buy GT tokens first.",
+              "error"
+            );
+            return;
+          }
+
+          const requiredAmount = ethers.parseEther(stakeAmount.toString());
+          console.log(
+            "💰 Required amount:",
+            ethers.formatEther(requiredAmount)
+          );
+
+          if (gtBalance < requiredAmount) {
+            console.log("❌ Insufficient GT balance");
+            showStatus(
+              `❌ Insufficient GT balance. You have ${ethers.formatEther(
+                gtBalance
+              )} GT, need ${stakeAmount} GT. Please buy GT tokens first.`,
+              "error"
+            );
+            return;
+          }
+
+          console.log("✅ GT balance sufficient");
+          showStatus("⏳ Approving GT tokens...", "warning");
+
+          // Check current allowance
+          console.log("🔍 Checking current allowance...");
+          let currentAllowance;
+          try {
+            currentAllowance = await contracts.gameToken.allowance(
+              userAddress,
+              CONFIG.contracts.PLAY_GAME
+            );
+            console.log(
+              "✅ Allowance check successful:",
+              ethers.formatEther(currentAllowance)
+            );
+          } catch (error) {
+            console.warn("⚠️ Allowance check failed, assuming 0:", error);
+            console.warn("⚠️ Error details:", {
+              message: error.message,
+              code: error.code,
+              data: error.data,
+            });
+            currentAllowance = ethers.getBigInt(0);
+          }
+
+          if (currentAllowance < requiredAmount) {
+            console.log("🔐 Approval needed");
+            console.log(
+              "🔐 Current allowance:",
+              ethers.formatEther(currentAllowance)
+            );
+            console.log(
+              "🔐 Required amount:",
+              ethers.formatEther(requiredAmount)
+            );
+
+            try {
+              console.log("🔐 Estimating gas for approval...");
+              const approveGasEstimate =
+                await contracts.gameToken.approve.estimateGas(
+                  CONFIG.contracts.PLAY_GAME,
+                  requiredAmount
+                );
+              console.log(
+                "⛽ Approval gas estimate:",
+                approveGasEstimate.toString()
+              );
+
+              console.log("🔐 Sending approval transaction...");
+              const approveTx = await contracts.gameToken.approve(
+                CONFIG.contracts.PLAY_GAME,
+                requiredAmount
+              );
+              console.log("📝 Approval transaction sent:", approveTx.hash);
+              console.log("⏳ Waiting for approval confirmation...");
+              await approveTx.wait();
+              console.log("✅ Approval transaction confirmed");
+              showStatus("✅ GT tokens approved", "success");
+            } catch (approveError) {
+              console.error("❌ Approval failed:", approveError);
+              console.error("❌ Approval error details:", {
+                message: approveError.message,
+                code: approveError.code,
+                data: approveError.data,
+                transaction: approveError.transaction,
+              });
+              throw approveError;
+            }
+          } else {
+            console.log("✅ Sufficient allowance already exists");
+          }
+
+          console.log("🎯 Starting stake transaction...");
+          showStatus("⏳ Staking in match...", "warning");
+
+          try {
+            console.log("🎯 Estimating gas for staking...");
+            const stakeGasEstimate = await contracts.playGame.stake.estimateGas(
+              matchIdBytes32
+            );
+            console.log("⛽ Stake gas estimate:", stakeGasEstimate.toString());
+
+            console.log("🎯 Sending stake transaction...");
+            const stakeTx = await contracts.playGame.stake(matchIdBytes32);
+            console.log("📝 Stake transaction sent:", stakeTx.hash);
+            console.log("⏳ Waiting for stake confirmation...");
+            await stakeTx.wait();
+            console.log("✅ Stake transaction confirmed");
+
+            await updateBalances();
+            await loadAssignedMatches(); // Refresh matches to show updated status
+
+            showStatus("🎉 Successfully staked in match!", "success");
+            addEvent(`⚡ Staked ${stakeAmount} GT in match`);
+          } catch (stakeError) {
+            console.error("❌ Staking failed:", stakeError);
+            console.error("❌ Staking error details:", {
+              message: stakeError.message,
+              code: stakeError.code,
+              data: stakeError.data,
+              transaction: stakeError.transaction,
+            });
+            throw stakeError;
+          }
+        } catch (error) {
+          console.error("❌ Staking error:", error);
+          console.error("❌ Full error object:", error);
+
+          if (error.message.includes("insufficient funds")) {
+            showStatus("❌ Insufficient ETH for gas fees", "error");
+          } else if (error.message.includes("rejected")) {
+            showStatus("❌ Transaction rejected by user", "warning");
+          } else if (error.message.includes("circuit breaker")) {
+            console.error("🔧 Circuit breaker detected - attempting bypass...");
+            showStatus(
+              "🔄 Circuit breaker detected, attempting bypass...",
+              "warning"
+            );
+
+            // Try to bypass the circuit breaker
+            const bypassProvider = await bypassCircuitBreaker();
+            if (bypassProvider) {
+              console.log("✅ Bypass successful, retrying transaction...");
+              showStatus("✅ Bypass successful, retrying...", "success");
+
+              // Retry the transaction with the bypass provider
+              try {
+                // Create new contracts with bypass provider
+                const bypassSigner = bypassProvider.getSigner(userAddress);
+                const bypassGameToken = new ethers.Contract(
+                  CONFIG.contracts.GAME_TOKEN,
+                  ABIS.ERC20,
+                  bypassSigner
+                );
+
+                console.log("🔐 Retrying approval with bypass provider...");
+                const approveTx = await bypassGameToken.approve(
+                  CONFIG.contracts.PLAY_GAME,
+                  requiredAmount
+                );
+                await approveTx.wait();
+                console.log("✅ Approval successful with bypass!");
+
+                showStatus("🎉 Transaction successful with bypass!", "success");
+                await updateBalances();
+                await loadAssignedMatches();
+                return;
+              } catch (bypassError) {
+                console.error("❌ Bypass retry failed:", bypassError);
+              }
+            }
+
+            showStatus(
+              "❌ MetaMask blocked transaction. Please check network settings.",
+              "error"
+            );
+            console.error(
+              "🔧 Circuit breaker issue - check MetaMask network configuration"
+            );
+
+            // Add a help button for network issues
+            setTimeout(() => {
+              const helpBtn = document.createElement("button");
+              helpBtn.className = "btn btn-secondary";
+              helpBtn.style.marginTop = "10px";
+              helpBtn.innerHTML = "🔧 Fix Network Settings";
+
+              // Add a bypass button
+              const bypassBtn = document.createElement("button");
+              bypassBtn.className = "btn btn-primary";
+              bypassBtn.style.marginTop = "10px";
+              bypassBtn.style.marginLeft = "10px";
+              bypassBtn.innerHTML = "🔄 Try Bypass";
+              bypassBtn.onclick = async () => {
+                console.log("🔄 Manual bypass attempt...");
+                showStatus("🔄 Attempting manual bypass...", "warning");
+
+                const bypassProvider = await bypassCircuitBreaker();
+                if (bypassProvider) {
+                  showStatus(
+                    "✅ Bypass successful! Try staking again.",
+                    "success"
+                  );
+                } else {
+                  showStatus(
+                    "❌ Bypass failed. Please reset network settings.",
+                    "error"
+                  );
+                }
+              };
+              if (statusMessage) {
+                statusMessage.appendChild(bypassBtn);
+              }
+              helpBtn.onclick = () => {
+                alert(`To fix the circuit breaker issue:
+
+      1. Open MetaMask
+      2. Go to Settings → Networks
+      3. Delete "Localhost 8545" network
+      4. Add network again with:
+         - Network Name: Localhost 8545
+         - RPC URL: http://127.0.0.1:8545
+         - Chain ID: 1337
+         - Currency Symbol: ETH
+
+      5. Go to Settings → Advanced
+      6. Click "Clear activity and nonce data"
+      7. Refresh this page and try again
+
+      If that doesn't work, try using a different browser or incognito mode.`);
+              };
+              const statusMessage = document.querySelector(".status-message");
+              if (statusMessage) {
+                statusMessage.appendChild(helpBtn);
+              }
+            }, 1000);
+          } else if (
+            error.message.includes("could not coalesce error") ||
+            error.message.includes("missing revert data")
+          ) {
+            showStatus(
+              "❌ You need GT tokens to stake! Please buy GT tokens with USDT first.",
+              "error"
+            );
+            // Add a quick action button
+            setTimeout(() => {
+              const buyGtBtn = document.createElement("button");
+              buyGtBtn.className = "btn btn-primary";
+              buyGtBtn.style.marginTop = "10px";
+              buyGtBtn.innerHTML = "💰 Buy GT Tokens Now";
+              buyGtBtn.onclick = () => {
+                document.getElementById("usdtAmount").focus();
+                document
+                  .getElementById("usdtAmount")
+                  .scrollIntoView({ behavior: "smooth" });
+              };
+              document.querySelector(".status-message").appendChild(buyGtBtn);
+            }, 1000);
+          } else {
+            showStatus("❌ Staking failed: " + error.message, "error");
+          }
+        }
+      }
+
+      // Stake in match button (manual entry)
+      stakeInMatchBtn.onclick = async () => {
+        try {
+          const matchIdValue = manualMatchId.value.trim();
+          if (!matchIdValue) {
+            showStatus("⚠️ Enter match ID", "warning");
+            return;
+          }
+
+          stakeInMatchBtn.innerHTML =
+            '<div class="spinner"></div><span>Staking...</span>';
+
+          // If user enters the full hex match ID, use it directly
+          let matchIdBytes32;
+          if (matchIdValue.startsWith("0x") && matchIdValue.length === 66) {
+            // It's a full bytes32 hex string
+            matchIdBytes32 = matchIdValue;
+          } else {
+            // For now, show an error - user must enter the full match ID
+            showStatus("❌ Please enter the full match ID (0x...)", "error");
+            stakeInMatchBtn.innerHTML = "<span>⚡ Stake in Match</span>";
+            return;
+          }
+
+          // Get match details to find stake amount
+          const match = await contracts.playGame.getMatch(matchIdBytes32);
+          const stakeAmountWei = match[3];
+          const stakeAmount = ethers.formatEther(stakeAmountWei);
+
+          await stakeInMatch(matchIdBytes32, stakeAmount);
+
+          manualMatchId.value = "";
+          stakeInMatchBtn.innerHTML = "<span>⚡ Stake in Match</span>";
+        } catch (error) {
+          console.error(error);
+          stakeInMatchBtn.innerHTML = "<span>⚡ Stake in Match</span>";
+          showStatus("❌ Manual staking failed: " + error.message, "error");
+        }
+      };
+
+      // Load match details for result declaration
+      async function loadMatchForResult() {
+        const matchIdValue = resultMatchId.value.trim();
+        if (!matchIdValue || !contracts.playGame) {
+          player1Label.textContent = "Player 1: Enter match ID to load";
+          player2Label.textContent = "Player 2: Enter match ID to load";
+          player1Winner.disabled = true;
+          player2Winner.disabled = true;
+          return;
+        }
+
+        try {
+          // Handle match ID input
+          let matchIdBytes32;
+          if (matchIdValue.startsWith("0x") && matchIdValue.length === 66) {
+            matchIdBytes32 = matchIdValue;
+          } else {
+            player1Label.textContent = "Player 1: Enter full match ID (0x...)";
+            player2Label.textContent = "Player 2: Enter full match ID (0x...)";
+            player1Winner.disabled = true;
+            player2Winner.disabled = true;
+            return;
+          }
+
+          const match = await contracts.playGame.getMatch(matchIdBytes32);
+          console.log("Match data for result declaration:", match);
+
+          const p1Address = match[1];
+          const p2Address = match[2];
+          const stakeAmount = ethers.formatEther(match[3]);
+          const status = match[4]; // 0=WAITING, 1=STAKED, 2=SETTLED, 3=REFUNDED
+
+          console.log("Match details:", {
+            p1Address,
+            p2Address,
+            stakeAmount,
+            status,
+          });
+
+          player1Label.textContent = `Player 1: ${p1Address.slice(
+            0,
+            8
+          )}...${p1Address.slice(-6)} (${stakeAmount} GT)`;
+          player2Label.textContent = `Player 2: ${p2Address.slice(
+            0,
+            8
+          )}...${p2Address.slice(-6)} (${stakeAmount} GT)`;
+
+          // Always enable radio buttons if we have valid addresses
+          player1Winner.disabled = false;
+          player2Winner.disabled = false;
+          player1Winner.value = p1Address;
+          player2Winner.value = p2Address;
+
+          // Show status based on match state
+          if (status === 1) {
+            // STAKED - ready for result
+            showStatus("✅ Match ready for result declaration", "success");
+          } else if (status === 0) {
+            showStatus(
+              "⚠️ Match not ready - players still need to stake",
+              "warning"
+            );
+          } else if (status === 2) {
+            showStatus("ℹ️ Match already settled", "warning");
+          } else if (status === 3) {
+            showStatus("ℹ️ Match was refunded", "warning");
+          }
+        } catch (error) {
+          console.error("Error loading match:", error);
+          player1Label.textContent = "Player 1: Error loading match";
+          player2Label.textContent = "Player 2: Error loading match";
+          player1Winner.disabled = true;
+          player2Winner.disabled = true;
+          showStatus("❌ Error loading match: " + error.message, "error");
+        }
+      }
+
+      // Load match details for result declaration
+      resultMatchId.oninput = loadMatchForResult;
+
+      // Add refresh button functionality
+      const refreshMatchBtn = document.getElementById("refreshMatchBtn");
+      if (refreshMatchBtn) {
+        refreshMatchBtn.onclick = loadMatchForResult;
+      }
+
+      // Declare match result
+      declareResultBtn.onclick = async () => {
+        try {
+          const matchIdValue = resultMatchId.value.trim();
+          const selectedWinner = document.querySelector(
+            'input[name="winner"]:checked'
+          );
+
+          if (!matchIdValue) {
+            showStatus("⚠️ Enter match ID", "warning");
+            return;
+          }
+
+          if (!selectedWinner) {
+            showStatus("⚠️ Select a winner", "warning");
+            return;
+          }
+
+          const winnerAddress = selectedWinner.value;
+
+          showStatus("⏳ Declaring match result...", "warning");
+          declareResultBtn.innerHTML =
+            '<div class="spinner"></div><span>Declaring...</span>';
+
+          const response = await fetch("http://localhost:3000/match/result", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              matchId: matchIdValue,
+              winner: winnerAddress,
+            }),
+          });
+
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || "Result declaration failed");
+          }
+
+          // Clear form
+          resultMatchId.value = "";
+          player1Winner.checked = false;
+          player2Winner.checked = false;
+          player1Label.textContent = "Player 1: Enter match ID to load";
+          player2Label.textContent = "Player 2: Enter match ID to load";
+          declareResultBtn.innerHTML = "<span>🏆 Announce Winner</span>";
+
+          // Update balances immediately after result declaration
+          await updateBalances();
+
+          showStatus("🎉 Match result declared successfully!", "success");
+          addEvent(
+            `🏆 Match result: ${winnerAddress.slice(
+              0,
+              8
+            )}...${winnerAddress.slice(-6)} won!`
+          );
+        } catch (error) {
+          console.error(error);
+          declareResultBtn.innerHTML = "<span>🏆 Announce Winner</span>";
+          showStatus("❌ Result declaration failed: " + error.message, "error");
+        }
+      };
+
+      // Show status
+      function showStatus(message, type) {
+        statusContainer.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+        setTimeout(() => {
+          statusContainer.innerHTML = "";
+        }, 5000);
+      }
+
+      // Add event
+      function addEvent(eventText) {
+        const eventItem = document.createElement("div");
+        eventItem.className = "event-item";
+        eventItem.innerHTML = `
+                       <div class="event-time">${new Date().toLocaleTimeString()}</div>
+                       <div class="event-content">${eventText}</div>
+                     `;
+
+        if (eventsList.firstChild?.textContent?.includes("Waiting")) {
+          eventsList.innerHTML = "";
+        }
+
+        eventsList.insertBefore(eventItem, eventsList.firstChild);
+
+        // Keep last 15 events
+        while (eventsList.children.length > 15) {
+          eventsList.removeChild(eventsList.lastChild);
+        }
+      }
+
+      // Load leaderboard
+      async function loadLeaderboard() {
+        try {
+          const leaderboardList = document.getElementById("leaderboardList");
+          leaderboardList.innerHTML = `
+             <div class="event-item">
+               <div class="event-time">Loading...</div>
+               <div class="event-content">Fetching leaderboard data</div>
+             </div>
+           `;
+
+          const response = await fetch("http://localhost:3001/leaderboard");
+          const data = await response.json();
+          const leaderboard = data.leaderboard || [];
+
+          if (leaderboard.length === 0) {
+            leaderboardList.innerHTML = `
+               <div class="event-item">
+                 <div class="event-time">No data</div>
+                 <div class="event-content">No leaderboard data available yet</div>
+               </div>
+             `;
+            return;
+          }
+
+          leaderboardList.innerHTML = "";
+
+          leaderboard.forEach((entry, index) => {
+            const rank = index + 1;
+            const rankIcon =
+              rank === 1
+                ? "🥇"
+                : rank === 2
+                ? "🥈"
+                : rank === 3
+                ? "🥉"
+                : `#${rank}`;
+
+            const leaderboardItem = document.createElement("div");
+            leaderboardItem.className = "event-item";
+            leaderboardItem.innerHTML = `
+                <div class="event-time">${rankIcon} ${entry.address.slice(
+              0,
+              6
+            )}...${entry.address.slice(-4)}</div>
+                <div class="event-content">
+                  <div style="margin-bottom: 0.5rem;">
+                    <strong>Wins:</strong> ${
+                      entry.wins
+                    } • <strong>Total GT Won:</strong> ${entry.gtWon} GT
+                  </div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    <strong>Matches Played:</strong> ${
+                      entry.totalMatches
+                    } • <strong>Win Rate:</strong> ${entry.winRate}%
+                  </div>
+                </div>
+              `;
+
+            leaderboardList.appendChild(leaderboardItem);
+          });
+        } catch (error) {
+          console.error("Error loading leaderboard:", error);
+          const leaderboardList = document.getElementById("leaderboardList");
+
+          if (error.message.includes("fetch")) {
+            leaderboardList.innerHTML = `
+               <div class="event-item">
+                 <div class="event-time">Service Unavailable</div>
+                 <div class="event-content">
+                   Leaderboard service not running. Please start the leaderboard service:<br>
+                   <code>node tools/leaderboard.js</code>
+                 </div>
+               </div>
+             `;
+          } else {
+            leaderboardList.innerHTML = `
+               <div class="event-item">
+                 <div class="event-time">Error</div>
+                 <div class="event-content">Failed to load leaderboard: ${error.message}</div>
+               </div>
+             `;
+          }
+        }
+      }
+
+      // Auto-refresh leaderboard periodically
+      let leaderboardRefreshInterval;
+      function startLeaderboardAutoRefresh() {
+        if (leaderboardRefreshInterval) {
+          clearInterval(leaderboardRefreshInterval);
+        }
+        // Refresh leaderboard every 10 seconds when connected
+        leaderboardRefreshInterval = setInterval(async () => {
+          if (isConnected && userAddress) {
+            await loadLeaderboard();
+          }
+        }, 10000);
+      }
+
+      function stopLeaderboardAutoRefresh() {
+        if (leaderboardRefreshInterval) {
+          clearInterval(leaderboardRefreshInterval);
+          leaderboardRefreshInterval = null;
+        }
+      }
+
+      // Initialize
+      window.addEventListener("load", init);
+    </script>
+  </body>
+</html>
